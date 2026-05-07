@@ -18,7 +18,6 @@ def func_performance(
 
             ros_logger = None
 
-            # Detect ROS2 node instance
             if log_in_ros and len(args) > 0:
                 obj = args[0]
                 if hasattr(obj, "get_logger"):
@@ -42,21 +41,22 @@ def func_performance(
                 raise
 
             t1 = time.time()
-
             current, peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
-
             cpu = process.cpu_percent()
             
+
             msg = (
                 f"\nFunction Name: {func.__name__}\n"
-                f"Node Name: {args[0].get_name()}\n"
                 f"Time Taken: {t1 - t0:.6f} sec\n"
                 f"Current Memory: {current / 1024 / 1024:.2f} MB\n"
                 f"Peak Memory: {peak / 1024 / 1024:.2f} MB\n"
                 f"CPU Usage: {cpu:.2f}%\n"
-                f"-----------------------------------"
             )
+            
+            if len(args) > 0 and hasattr(args[0], "get_name"):
+                msg += f"Node Name: {args[0].get_name()}\n"
+                msg += f"----------------------------------- \n"
 
             if log_in_console:
                 print(msg)
@@ -72,3 +72,19 @@ def func_performance(
     return decorator
 
 
+from rclpy.node import Node
+class TestNode(Node):
+    def __init__(self):
+        super().__init__("test_node")
+        
+    @func_performance(log_in_ros=True)
+    def callback(self):
+        x = [i for i in range(100000)] 
+        
+        
+if __name__ == "__main__": 
+    import rclpy
+    rclpy.init()
+    node = TestNode()
+    node.callback()
+    rclpy.shutdown()
