@@ -1,36 +1,74 @@
 import functools
 import time
 import tracemalloc
+import psutil
 
 
-def performance_logger(
-    save_path=None,
-    save_format=None,
-    log_in_console=True, 
-    log_in_ros=False, 
+process = psutil.Process()
+
+def func_performance(
+    log_in_console=True,
+    log_in_ros=False,
     ):
+    
     def decorator(func):
-        """Decorator that logs execution time and memory usage of a function."""
-        @functools.wraps(func) 
+
+        @functools.wraps(func)
         def wrapper(*args, **kwargs):
+
+            ros_logger = None
+
+            # Detect ROS2 node instance
+            if log_in_ros and len(args) > 0:
+                obj = args[0]
+                if hasattr(obj, "get_logger"):
+                    ros_logger = obj.get_logger()
+
             tracemalloc.start()
-            
             t0 = time.time()
-            result = func(*args, **kwargs)
+
+            try:
+                result = func(*args, **kwargs)
+
+            except Exception as e:
+                if ros_logger:
+                    ros_logger.error(
+                        f"Error in function '{func.__name__}': {str(e)}"
+                    )
+                else:
+                    print(f"Error in function '{func.__name__}': {str(e)}")
+
+                tracemalloc.stop()
+                raise
+
             t1 = time.time()
-            
+
             current, peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
+
+            cpu = process.cpu_percent()
             
-            
+            msg = (
+                f"\nFunction Name: {func.__name__}\n"
+                f"Node Name: {args[0].get_name()}\n"
+                f"Time Taken: {t1 - t0:.6f} sec\n"
+                f"Current Memory: {current / 1024 / 1024:.2f} MB\n"
+                f"Peak Memory: {peak / 1024 / 1024:.2f} MB\n"
+                f"CPU Usage: {cpu:.2f}%\n"
+                f"-----------------------------------"
+            )
+
             if log_in_console:
-                print(f"Function Name: {func.__name__}")
-                print(f"Arguments: args={args}, kwargs={kwargs}")
-                print(f"Time Taken: {t1 - t0:.6f} seconds")
-                print(f"Current Memory Usage: {current / 1024 / 1024:.2f} MB")
-                print(f"Peak Memory Usage: {peak / 1024 / 1024:.2f} MB")
-                print("*************************************************")
-        
+                print(msg)
+
+            if ros_logger and log_in_ros:
+                ros_logger.info(msg)
+                
+
+            return result
+
         return wrapper
-    
+
     return decorator
+
+
