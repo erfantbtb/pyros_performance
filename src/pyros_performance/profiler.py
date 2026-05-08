@@ -45,7 +45,6 @@ def profiler(
             tracemalloc.stop()
             cpu = process.cpu_percent()
             
-
             msg = (
                 f"\nFunction Name: {func.__name__}\n"
                 f"Time Taken: {t1 - t0:.6f} sec\n"
