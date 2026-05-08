@@ -1,0 +1,3 @@
+dist/*
+src/pyros_performance.egg-info/
+build/
