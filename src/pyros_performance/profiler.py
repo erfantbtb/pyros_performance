@@ -6,7 +6,7 @@ import psutil
 
 process = psutil.Process()
 
-def func_performance(
+def profiler(
     log_in_console=True,
     log_in_ros=False,
     ):
@@ -71,20 +71,3 @@ def func_performance(
 
     return decorator
 
-
-from rclpy.node import Node
-class TestNode(Node):
-    def __init__(self):
-        super().__init__("test_node")
-        
-    @func_performance(log_in_ros=True)
-    def callback(self):
-        x = [i for i in range(100000)] 
-        
-        
-if __name__ == "__main__": 
-    import rclpy
-    rclpy.init()
-    node = TestNode()
-    node.callback()
-    rclpy.shutdown()
