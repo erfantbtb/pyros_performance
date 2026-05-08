@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pyros-performance"
-version = "0.1.0"
+version = "0.1.1"
 description = "ROS2-friendly function performance profiler"
 authors = [
     { name = "Erfan", email = "erfantabatabaei1380@gmail.com"}
